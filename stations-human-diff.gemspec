@@ -1,11 +1,9 @@
 lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
-require "shd/version"
-
 Gem::Specification.new do |spec|
   spec.name          = "stations-human-diff"
-  spec.version       = SHD::VERSION
+  spec.version       = "1.0.2"
   spec.authors       = ["Kevin Soltysiak"]
   spec.email         = ["kevin.soltysiak@trainline.com"]
 

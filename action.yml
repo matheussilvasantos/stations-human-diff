@@ -1,0 +1,11 @@
+name: 'Stations Human Diff'
+description: 'Creates a beautiful csv diff'
+author: 'Trainline'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+
+branding:
+  icon: 'message-square'
+  color: 'blue'
