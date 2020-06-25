@@ -3,57 +3,36 @@ lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require_relative "./lib/stations_human_diff"
 
-puts "Running script"
+SHD::Logger.info "Running script"
 
-# if !ENV["GITHUB_TOKEN"]
-#   puts "Missing GITHUB_TOKEN"
-#   exit(1)
-# end
-
-SHD::EnvironmentChecker.check!
+# SHD::EnvironmentChecker.check!
 
 SHD::Logger.info "Getting request..."
-body = request.body.read
+json = File.read(ENV.fetch("GITHUB_EVENT_PATH"))
+event = JSON.parse(json)
 
-if SHD::Utils.verify_signature(body, request.env["HTTP_X_HUB_SIGNATURE"])
-  SHD::Logger.info "Signature valid, moving on..."
+if %w(opened reopened synchronize).include?(event['action'])
+  SHD::Logger.info "Action is `#{event['action']}`. Acknowleding webhook..."
 
-  params = JSON.parse(body)
+  client = SHD::GithubClient.generate
 
-  if %w(opened reopened synchronize).include?(params['action'])
-    SHD::Logger.info "Action is `#{params['action']}`. Acknowleding webhook..."
+  SHD::GithubClient.remove_old_comments!(client: client, pull: event["pull_request"])
 
-    t = Thread.start do
-      client = SHD::GithubClient.generate
+  ## Diffing stations..
+  report = SHD::DiffAnalyzer.new(
+    base: event["pull_request"]["base"],
+    head: event["pull_request"]["head"],
+  ).run
 
-      SHD::GithubClient.remove_old_comments!(client: client, pull: params["pull_request"])
+  formatted_report = SHD::ReportFormatter.run(report)
 
-      ## Diffing stations..
-      report = SHD::DiffAnalyzer.new(
-        base: params["pull_request"]["base"],
-        head: params["pull_request"]["head"],
-      ).run
+  SHD::GithubClient.post_comment!(
+    client: client,
+    pull:   event["pull_request"],
+    body:   formatted_report,
+  )
 
-      formatted_report = SHD::ReportFormatter.run(report)
-
-      SHD::GithubClient.post_comment!(
-        client: client,
-        pull:   params["pull_request"],
-        body:   formatted_report,
-      )
-
-      SHD::Logger.info "Done."
-    end
-    t.abort_on_exception = true
-
-    exit(0)
-  else
-    SHD::Logger.info "Action is #{params['action']}, doing nothing."
-
-    exit(0)
-  end
+  SHD::Logger.info "Done."
 else
-  SHD::Logger.info "Signature invalid, doing nothing"
-
-  exit(1)
+  SHD::Logger.info "Action is #{event['action']}, doing nothing."
 end
