@@ -95,7 +95,7 @@ module SHD
 
       Logger.info "Fetching and parsing #{url} ..."
 
-      raw = open(url).read
+      raw = URI.parse(url).open.read
       CSV.parse(raw, CSV_PARAMETERS)
     end
 

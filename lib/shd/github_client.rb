@@ -5,19 +5,28 @@ require "openssl"
 module SHD
   class GithubClient
 
+    def self.username
+      if ENV["GITHUB_TOKEN"]
+        client.user.login
+      else
+        "#{ENV['STATIONS_GITHUB_APP_NAME']}[bot]"
+      end
+    end
+
     def self.generate
       Logger.info "Opening connection to Github..."
 
-      # client = Octokit::Client.new(
-      #   client_id:     ENV['STATIONS_GITHUB_APP_CLIENT_ID'],
-      #   client_secret: ENV['STATIONS_GITHUB_APP_CLIENT_SECRET'],
-      #   bearer_token:  generate_webtoken,
-      # )
+      client = Octokit::Client.new(
+        client_id:     ENV['STATIONS_GITHUB_APP_CLIENT_ID'],
+        client_secret: ENV['STATIONS_GITHUB_APP_CLIENT_SECRET'],
+        bearer_token:  generate_webtoken,
+      )
 
-      # installation = client.create_app_installation_access_token(ENV['STATIONS_GITHUB_APP_INSTALL_ID'])
-      # client.access_token = installation[:token]
+      installation = client.create_app_installation_access_token(ENV['STATIONS_GITHUB_APP_INSTALL_ID'])
+      client.access_token = installation[:token]
 
-      client = Octokit::Client.new(access_token: ENV["GITHUB_TOKEN"])
+      # Github client alternative, using personal token
+      # client = Octokit::Client.new(access_token: ENV["GITHUB_TOKEN"])
 
       client
     end
@@ -41,7 +50,7 @@ module SHD
         pull["base"]["repo"]["full_name"],
         pull["number"],
       ).select do |comment|
-        comment.user.login == client.user.login
+        comment.user.login == GithubClient.username
       end
 
       own_comments.select do |comment|

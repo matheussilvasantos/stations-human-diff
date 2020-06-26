@@ -4,21 +4,29 @@ AllCops:
   TargetRubyVersion: 2.5
 
 # Metrics
-Metrics/MethodLength:
-  Enabled: false
-Metrics/ClassLength:
-  Enabled: false
-Metrics/ModuleLength:
+Metrics/AbcSize:
   Enabled: false
 Metrics/BlockLength:
   Enabled: false
-Metrics/AbcSize:
+Metrics/ClassLength:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/MethodLength:
+  Enabled: false
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/PerceivedComplexity:
   Enabled: false
 
 # Naming
-Naming/PredicateName:
-  Enabled: false
 Naming/AccessorMethodName:
+  Enabled: false
+Naming/FileName:
+  Enabled: true
+  Exclude:
+    - 'lib/stations-human-diff.rb'
+Naming/PredicateName:
   Enabled: false
 
 # Layout

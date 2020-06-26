@@ -5,7 +5,7 @@ require_relative "./lib/stations_human_diff"
 
 SHD::Logger.info "Running script"
 
-# SHD::EnvironmentChecker.check!
+SHD::EnvironmentChecker.check!
 
 SHD::Logger.info "Getting request..."
 json = File.read(ENV.fetch("GITHUB_EVENT_PATH"))
@@ -26,11 +26,13 @@ if %w(opened reopened synchronize).include?(event['action'])
 
   formatted_report = SHD::ReportFormatter.run(report)
 
-  SHD::GithubClient.post_comment!(
-    client: client,
-    pull:   event["pull_request"],
-    body:   formatted_report,
-  )
+  unless formatted_report.empty?
+    SHD::GithubClient.post_comment!(
+      client: client,
+      pull:   event["pull_request"],
+      body:   formatted_report,
+    )
+  end
 
   SHD::Logger.info "Done."
 else

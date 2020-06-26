@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    stations-human-diff (1.0.2)
+    stations-human-diff (1.0.3)
       jwt (~> 2.1, >= 2.1.0)
       octokit (~> 4.8, >= 4.8.0)
 
