@@ -3,38 +3,42 @@ lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require_relative "./lib/stations_human_diff"
 
-SHD::Logger.info "Running script"
+SHD::Logger.info "Veryfing pull requests..."
 
 SHD::EnvironmentChecker.check!
 
-SHD::Logger.info "Getting request..."
-json = File.read(ENV.fetch("GITHUB_EVENT_PATH"))
-event = JSON.parse(json)
+client = SHD::GithubClient.generate
+repository = ENV.fetch("GITHUB_REPOSITORY")
+pull_requests = client.pull_requests(repository, state: 'open')
 
-if %w(opened reopened synchronize).include?(event['action'])
-  SHD::Logger.info "Action is `#{event['action']}`. Acknowleding webhook..."
+pull_requests.each do |pull_request|
+  SHD::Logger.info "Veryfing pull request ##{pull_request['number']}..."
 
-  client = SHD::GithubClient.generate
+  own_comments = SHD::GithubClient.own_comments(client: client, pull: pull_request)
+  last_comment = own_comments.last
 
-  SHD::GithubClient.remove_old_comments!(client: client, pull: event["pull_request"])
+  if last_comment.nil? || pull_request["updated_at"] > last_comment.updated_at
+    SHD::GithubClient.remove_old_comments!(
+      client:   client,
+      pull:     pull_request,
+      comments: own_comments,
+    )
 
-  ## Diffing stations..
-  report = SHD::DiffAnalyzer.new(
-    base: event["pull_request"]["base"],
-    head: event["pull_request"]["head"],
-  ).run
+    ## Diffing stations..
+    report = SHD::DiffAnalyzer.new(
+      base: pull_request["base"],
+      head: pull_request["head"],
+    ).run
 
-  formatted_report = SHD::ReportFormatter.run(report)
+    formatted_report = SHD::ReportFormatter.run(report)
+    formatted_report = formatted_report.empty? ? 'No changes' : formatted_report
 
-  unless formatted_report.empty?
     SHD::GithubClient.post_comment!(
       client: client,
-      pull:   event["pull_request"],
+      pull:   pull_request,
       body:   formatted_report,
     )
   end
-
-  SHD::Logger.info "Done."
-else
-  SHD::Logger.info "Action is #{event['action']}, doing nothing."
 end
+
+SHD::Logger.info "Done."

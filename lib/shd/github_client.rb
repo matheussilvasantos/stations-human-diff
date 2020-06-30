@@ -6,27 +6,26 @@ module SHD
   class GithubClient
 
     def self.username
-      if ENV["GITHUB_TOKEN"]
-        client.user.login
-      else
-        "#{ENV['STATIONS_GITHUB_APP_NAME']}[bot]"
-      end
+      "#{ENV['STATIONS_GITHUB_APP_NAME'] || 'github-actions'}[bot]"
     end
 
     def self.generate
       Logger.info "Opening connection to Github..."
 
-      client = Octokit::Client.new(
-        client_id:     ENV['STATIONS_GITHUB_APP_CLIENT_ID'],
-        client_secret: ENV['STATIONS_GITHUB_APP_CLIENT_SECRET'],
-        bearer_token:  generate_webtoken,
-      )
+      if ENV["GITHUB_TOKEN"]
+        # Github client alternative, using personal token
+        client = Octokit::Client.new(access_token: ENV["GITHUB_TOKEN"])
+      else
+        # Github app credentials
+        client = Octokit::Client.new(
+          client_id:     ENV['STATIONS_GITHUB_APP_CLIENT_ID'],
+          client_secret: ENV['STATIONS_GITHUB_APP_CLIENT_SECRET'],
+          bearer_token:  generate_webtoken,
+        )
 
-      installation = client.create_app_installation_access_token(ENV['STATIONS_GITHUB_APP_INSTALL_ID'])
-      client.access_token = installation[:token]
-
-      # Github client alternative, using personal token
-      # client = Octokit::Client.new(access_token: ENV["GITHUB_TOKEN"])
+        installation = client.create_app_installation_access_token(ENV['STATIONS_GITHUB_APP_INSTALL_ID'])
+        client.access_token = installation[:token]
+      end
 
       client
     end
@@ -43,17 +42,19 @@ module SHD
       JWT.encode(payload, private_key, "RS256")
     end
 
-    def self.remove_old_comments!(client:, pull:)
-      Logger.info "Removing old comments..."
-
-      own_comments = client.issue_comments(
+    def self.own_comments(client:, pull:)
+      client.issue_comments(
         pull["base"]["repo"]["full_name"],
         pull["number"],
       ).select do |comment|
         comment.user.login == GithubClient.username
       end
+    end
 
-      own_comments.select do |comment|
+    def self.remove_old_comments!(client:, pull:, comments:)
+      Logger.info "Removing old comments..."
+
+      comments.each do |comment|
         client.delete_comment(
           pull["base"]["repo"]["full_name"],
           comment.id,
