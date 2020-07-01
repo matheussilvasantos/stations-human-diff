@@ -17,7 +17,10 @@ pull_requests.each do |pull_request|
   own_comments = SHD::GithubClient.own_comments(client: client, pull: pull_request)
   last_comment = own_comments.last
 
-  if last_comment.nil? || pull_request["updated_at"] > last_comment.updated_at
+  commits = SHD::GithubClient.commits(client: client, pull: pull_request)
+  last_commit = commits.last
+
+  if last_comment.nil? || last_commit.commit.committer.date > last_comment.updated_at
     SHD::GithubClient.remove_old_comments!(
       client:   client,
       pull:     pull_request,

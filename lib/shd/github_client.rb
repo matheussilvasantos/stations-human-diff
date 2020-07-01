@@ -42,6 +42,13 @@ module SHD
       JWT.encode(payload, private_key, "RS256")
     end
 
+    def self.commits(client:, pull:)
+      client.pull_request_commits(
+        pull["base"]["repo"]["full_name"],
+        pull["number"],
+      )
+    end
+
     def self.own_comments(client:, pull:)
       client.issue_comments(
         pull["base"]["repo"]["full_name"],
