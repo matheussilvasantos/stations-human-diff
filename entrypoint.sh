@@ -41,16 +41,6 @@ pull_requests.each do |pull_request|
       pull:   pull_request,
       body:   formatted_report,
     )
-
-    client.create_check_run(
-      pull_request["base"]["repo"]["full_name"],
-      'Stations Human Diff',
-      pull_request["head"]["sha"],
-      {
-        status:     'completed',
-        conclusion: 'success',
-      },
-    )
   end
 end
 
