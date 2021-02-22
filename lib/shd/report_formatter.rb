@@ -43,7 +43,12 @@ module SHD
         report[:stations][:changed].each { |changeset| strings += format_changeset(changeset) }
       end
 
-      strings.join("\n")
+      string = strings.join("\n")
+      if string.length > 60000 # Max body size for Github : 65536
+        string = string.slice(0, 60000) + "\n\nTruncated"
+      end
+
+      string
     end
 
     ## Formatter helpers
