@@ -13,7 +13,7 @@ WORKDIR /app
 COPY Gemfile* /app/
 COPY *.gemspec /app/
 
-RUN gem install bundler
+RUN gem install bundler -v '~> 2.4.0'
 RUN bundle install --without development
 
 COPY . /app
