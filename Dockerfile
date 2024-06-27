@@ -1,4 +1,4 @@
-FROM ruby:2.6-alpine
+FROM ruby:3.3-alpine
 
 RUN apk add --update git
 LABEL "com.github.actions.name"="Stations Human Diff"

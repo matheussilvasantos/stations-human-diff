@@ -96,7 +96,7 @@ module SHD
       Logger.info "Fetching and parsing #{url} ..."
 
       raw = URI.parse(url).open.read
-      CSV.parse(raw, CSV_PARAMETERS)
+      CSV.parse(raw, **CSV_PARAMETERS)
     end
 
     def group_by_id(stations, all_ids)
